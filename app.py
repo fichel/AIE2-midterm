@@ -1,5 +1,6 @@
 # import dependencies
 import os
+import requests
 from operator import itemgetter
 import chainlit as cl
 from llama_parse import LlamaParse
@@ -28,6 +29,9 @@ os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 os.environ["LLAMA_CLOUD_API_KEY"] = os.getenv("LLAMA_CLOUD_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+
+# pdf url
+URL = "https://d18rn0p25nwr6d.cloudfront.net/CIK-0001326801/c7318154-f6ae-4866-89fa-f0c589f2ee3d.pdf"
 
 # parse instructions
 PARSING_INSTRUCTION = """The provided document is an annual report filed by Meta Platforms, Inc. with the Securities and Exchange Commission (SEC). 
@@ -116,6 +120,25 @@ def get_vectorstore(client, collection_name, embeddings) -> Qdrant:
 
 
 def parse_10K_file() -> None:
+
+    # Create the data directory if it doesn't exist
+    data_dir = "data"
+    os.makedirs(data_dir, exist_ok=True)
+
+    # Check if the file already exists
+    file_path = os.path.join(data_dir, "Meta_10k.pdf")
+    if not os.path.exists(file_path):
+        # Download the file
+        url = URL
+        response = requests.get(url)
+
+        # Save the file to the data directory
+        with open(file_path, "wb") as file:
+            file.write(response.content)
+        print("File downloaded successfully.")
+    else:
+        print("File already exists. Skipping download.")
+
     # setup parser
     parser = LlamaParse(
         result_type=ResultType.MD, parsing_instruction=PARSING_INSTRUCTION
